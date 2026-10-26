@@ -1,0 +1,42 @@
+[
+  {
+    "subject": "Action required: verify your mailbox password",
+    "body": "Your account will be disabled today. Sign in at https://mail-login-check.example.invalid to keep access.",
+    "expected_classification": "PHISHING_HIGH"
+  },
+  {
+    "subject": "MFA enrollment expires in one hour",
+    "body": "Use this unfamiliar link to re-enter your password and one-time code: https://identity-reset.example.invalid.",
+    "expected_classification": "PHISHING_HIGH"
+  },
+  {
+    "subject": "Updated invoice attached",
+    "body": "Please review the unexpected invoice attachment and open the macro-enabled document to view the payment details.",
+    "expected_classification": "PHISHING_MEDIUM"
+  },
+  {
+    "subject": "Quick change to the supplier bank details",
+    "body": "The supplier asks for an urgent wire transfer to a new account, but the request should be verified through another channel.",
+    "expected_classification": "PHISHING_MEDIUM"
+  },
+  {
+    "subject": "Shared document awaiting review",
+    "body": "An unexpected message says a document is ready and links to a lookalike file-sharing sign-in page.",
+    "expected_classification": "PHISHING_LOW"
+  },
+  {
+    "subject": "Unsolicited offer from a recruiter",
+    "body": "A recruiter you do not know asks you to reply with a resume. There is no link, attachment, or request for credentials.",
+    "expected_classification": "PHISHING_LOW"
+  },
+  {
+    "subject": "Weekly engineering status",
+    "body": "The engineering team shares the sprint summary and meeting notes in the usual internal workspace.",
+    "expected_classification": "BENIGN"
+  },
+  {
+    "subject": "Your support request has been updated",
+    "body": "The help desk confirms that ticket 1042 was resolved. Reply to the existing support thread if you need more help.",
+    "expected_classification": "BENIGN"
+  }
+]

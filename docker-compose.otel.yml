@@ -1,0 +1,13 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    environment:
+      SPLUNK_HEC_URL: ${SPLUNK_HEC_URL:?Set the Splunk HEC URL in .env}
+      SPLUNK_HEC_TOKEN: ${SPLUNK_HEC_TOKEN:?Set the Splunk HEC token in .env}
+      SPLUNK_HEC_INDEX: ${SPLUNK_HEC_INDEX:?Set the Splunk HEC index in .env}
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro

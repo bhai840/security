@@ -1,0 +1,11 @@
+**/.env
+**/.env.*
+!**/.env.example
+**/.venv/
+**/node_modules/
+**/build/
+**/coverage/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+/hec-test.json

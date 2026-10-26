@@ -1,0 +1,39 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://localhost:3000
+          allowed_headers:
+            - "*"
+          max_age: 7200
+
+processors:
+  batch:
+
+exporters:
+  splunk_hec:
+    endpoint: ${env:SPLUNK_HEC_URL}
+    token: ${env:SPLUNK_HEC_TOKEN}
+    index: ${env:SPLUNK_HEC_INDEX}
+    source: phishing-otel
+    sourcetype: _json
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [splunk_hec]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [splunk_hec]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [splunk_hec]

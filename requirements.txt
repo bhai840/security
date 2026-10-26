@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+python-dotenv
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-instrumentation-fastapi
+galileo>=1.50.1,<2

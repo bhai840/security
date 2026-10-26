@@ -1,0 +1,6 @@
+{
+  "subject": "Password Expiration Notice",
+  "sender": "it-helpdesk@secure-microsoft-support.com",
+  "body": "Your password expires today. Reset now: https://m365-auth-update.com/login",
+  "headers": "Received: from mail.secure-microsoft-support.com (203.55.190.22)"
+}
