@@ -21,6 +21,7 @@ class SplunkClientTests(unittest.TestCase):
                 "SPLUNK_HEC_URL": "https://splunk.example/services/collector",
                 "SPLUNK_HEC_TOKEN": "test-hec-token",
                 "SPLUNK_HEC_INDEX": "test-index",
+                "SPLUNK_HEC_VERIFY_TLS": "true",
             },
         )
         self.environment.start()
@@ -39,6 +40,7 @@ class SplunkClientTests(unittest.TestCase):
         )
 
         post.assert_called_once()
+        self.assertTrue(post.call_args.kwargs["verify"])
         self.assertEqual(
             post.call_args.kwargs["headers"]["Authorization"],
             "Splunk test-hec-token",
@@ -83,6 +85,23 @@ class SplunkClientTests(unittest.TestCase):
             )
 
         self.assertEqual(context.exception.status_code, 502)
+
+    @patch.dict("os.environ", {"SPLUNK_HEC_VERIFY_TLS": "false"})
+    @patch("splunk_client.requests.post")
+    def test_tls_verification_can_be_disabled_for_explicit_demo_override(self, post):
+        response = Mock()
+        response.json.return_value = {"text": "Success", "code": 0}
+        post.return_value = response
+
+        with self.assertLogs("splunk_client", level="WARNING") as captured:
+            send_phishing_email_to_splunk(
+                self.email,
+                "PHISHING_HIGH",
+                "Synthetic reason",
+            )
+
+        self.assertFalse(post.call_args.kwargs["verify"])
+        self.assertTrue(any("may be exposed" in line for line in captured.output))
 
     @patch("splunk_client.requests.post", side_effect=requests.ConnectionError)
     def test_connection_error_gives_endpoint_diagnostic(self, _post):

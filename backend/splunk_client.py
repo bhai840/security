@@ -19,6 +19,16 @@ def send_phishing_email_to_splunk(
             status_code=503,
             detail="Splunk HEC is not configured for email-content export",
         )
+    verify_tls = os.getenv("SPLUNK_HEC_VERIFY_TLS", "true").lower() not in {
+        "false",
+        "0",
+        "no",
+    }
+    if not verify_tls:
+        logger.warning(
+            "Splunk HEC TLS certificate verification is disabled; "
+            "credentials and event data may be exposed"
+        )
 
     event = {
         "email_id": email["id"],
@@ -42,6 +52,7 @@ def send_phishing_email_to_splunk(
             json=payload,
             headers={"Authorization": f"Splunk {token}"},
             timeout=15,
+            verify=verify_tls,
         )
         response.raise_for_status()
         result = response.json()

@@ -134,6 +134,12 @@ traces, so Galileo does not receive the email content. This setting defaults to
 existing 4,000-character body preview. Splunk retention and access controls
 will apply to the full body sent in the event.
 
+TLS certificate verification for direct HEC email exports is enabled by
+default. `SPLUNK_HEC_VERIFY_TLS=false` disables that verification and is
+insecure: use it only for isolated demos with synthetic data, never for
+production or real mailbox content. The backend logs a warning when this
+override is active.
+
 Start or rebuild the stack, then open `http://localhost:8080`, choose
 **Connect Gmail**, sign in to the test account, and grant read-only access.
 Return to the app and choose **Scan Gmail Inbox**. OAuth tokens are held in
