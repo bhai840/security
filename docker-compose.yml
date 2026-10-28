@@ -22,6 +22,9 @@ services:
       SPLUNK_HEC_URL: ${SPLUNK_HEC_URL}
       SPLUNK_HEC_TOKEN: ${SPLUNK_HEC_TOKEN}
       SPLUNK_HEC_INDEX: ${SPLUNK_HEC_INDEX}
+      PHISHING_EXPORT_STATE_DB: /app/state/phishing_export_state.sqlite3
+    volumes:
+      - phishing-state:/app/state
     expose:
       - "8000"
     depends_on:
@@ -50,3 +53,6 @@ services:
       otel-collector:
         condition: service_started
     restart: unless-stopped
+
+volumes:
+  phishing-state:

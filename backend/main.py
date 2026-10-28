@@ -1,9 +1,17 @@
+import asyncio
+import logging
 import os
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from email_export_state import (
+    export_email_once,
+    get_processed_email,
+    record_processed_email,
+)
 from gmail_client import (
     complete_google_oauth,
     fetch_recent_emails,
@@ -15,11 +23,37 @@ from soar import simulate_actions
 from splunk_client import send_phishing_email_to_splunk
 from telemetry import configure_telemetry, get_tracer, shutdown_telemetry
 
+logger = logging.getLogger(__name__)
+GMAIL_POLL_INTERVAL_SECONDS = 60
+_scan_lock = threading.Lock()
+
+
+async def _poll_gmail_once():
+    if is_gmail_connected():
+        await asyncio.to_thread(_scan_inbox)
+
+
+async def _gmail_poll_loop():
+    while True:
+        await asyncio.sleep(GMAIL_POLL_INTERVAL_SECONDS)
+        try:
+            await _poll_gmail_once()
+        except Exception:
+            logger.exception("Automatic Gmail polling failed")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
-    shutdown_telemetry()
+    poll_task = asyncio.create_task(_gmail_poll_loop())
+    try:
+        yield
+    finally:
+        poll_task.cancel()
+        try:
+            await poll_task
+        except asyncio.CancelledError:
+            pass
+        shutdown_telemetry()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -52,11 +86,16 @@ def _export_phishing_email(email, result):
         or not result["classification"].startswith("PHISHING_")
     ):
         return
-    send_phishing_email_to_splunk(
-        email,
-        result["classification"],
-        result["reason"],
+    exported = export_email_once(
+        email["id"],
+        lambda: send_phishing_email_to_splunk(
+            email,
+            result["classification"],
+            result["reason"],
+        ),
     )
+    if not exported:
+        logger.info("Skipping duplicate Splunk export for email %s", email["id"])
 
 
 @app.get("/api/incidents")
@@ -90,6 +129,15 @@ def health_check():
 
 @app.post("/api/scan")
 def scan_inbox():
+    return _scan_inbox()
+
+
+def _scan_inbox():
+    with _scan_lock:
+        return _scan_inbox_locked()
+
+
+def _scan_inbox_locked():
     with tracer.start_as_current_span("phishing.scan_inbox") as span:
         emails = fetch_recent_emails(limit=10)
         global INCIDENTS
@@ -97,7 +145,14 @@ def scan_inbox():
 
         for email in emails:
             with tracer.start_as_current_span("phishing.classify_email"):
-                result = classify_email(email["subject"], email["body_preview"])
+                result = get_processed_email(email["id"])
+                if result is None:
+                    result = classify_email(
+                        email["subject"],
+                        email["body_preview"],
+                    )
+                    _export_phishing_email(email, result)
+                    record_processed_email(email["id"], result)
                 incident = {
                     "id": email["id"],
                     "subject": email["subject"],
@@ -107,7 +162,6 @@ def scan_inbox():
                     "reason": result["reason"],
                     "actions_taken": [],
                 }
-                _export_phishing_email(email, result)
                 simulate_actions(incident)
                 INCIDENTS.append(incident)
 

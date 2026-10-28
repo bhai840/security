@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY backend/ /app/
 
 RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /app/state \
     && chown -R appuser:appuser /app
 
 USER appuser

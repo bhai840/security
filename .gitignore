@@ -8,4 +8,5 @@
 **/__pycache__/
 **/*.py[cod]
 **/.pytest_cache/
+**/*.sqlite3
 /hec-test.json

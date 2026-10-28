@@ -134,6 +134,12 @@ traces, so Galileo does not receive the email content. This setting defaults to
 existing 4,000-character body preview. Splunk retention and access controls
 will apply to the full body sent in the event.
 
+Repeated scans skip Gmail message IDs already recorded after a successful
+Splunk export. The SQLite database is stored in the Compose `phishing-state`
+volume, so records survive container recreation. Failed HEC exports are not
+recorded and can be retried. Existing duplicate events in Splunk are not
+removed; deduplication applies to future exports.
+
 TLS certificate verification for direct HEC email exports is enabled by
 default. `SPLUNK_HEC_VERIFY_TLS=false` disables that verification and is
 insecure: use it only for isolated demos with synthetic data, never for
@@ -152,6 +158,15 @@ After a scan, find phishing email events in Splunk with:
 ```spl
 index=<value of SPLUNK_HEC_INDEX> source=phishing-email
 ```
+
+The backend also checks Gmail automatically every minute while Gmail is
+connected; the manual **Scan Gmail Inbox** button remains available. Automatic
+polling runs server-side, even when the browser is closed. Gmail OAuth tokens
+are currently held in backend memory, so reconnect Gmail after a backend
+restart for polling to resume. Polling failures are logged and the next
+scheduled check still runs. Classification results are cached by Gmail message
+ID in the same persistent state volume, so already-processed messages are not
+sent to the model again on every poll.
 
 For a standalone backend development run (instead of Docker):
 
